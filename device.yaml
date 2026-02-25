@@ -1,0 +1,462 @@
+config:
+  register_address_type: u8
+  default_byte_order: BE
+  defmt_feature: "defmt"
+
+# =============================================================================
+# Device Mode Register (0x00)
+# =============================================================================
+
+DeviceMode:
+  type: register
+  address: 0x00
+  size_bits: 8
+  access: RW
+  description: Device operating mode
+  fields:
+    mode:
+      base: uint
+      start: 4
+      end: 7
+      conversion:
+        name: DeviceMode
+        Working: 0
+        Factory: 4
+        Unknown: default
+
+# =============================================================================
+# Gesture and Touch Status Registers (0x01-0x02)
+# =============================================================================
+
+GestureId:
+  type: register
+  address: 0x01
+  size_bits: 8
+  access: RO
+  description: Gesture ID
+  fields:
+    gesture:
+      base: uint
+      start: 0
+      end: 8
+      conversion:
+        name: GestureId
+        NoGesture: 0x00
+        MoveUp: 0x10
+        MoveRight: 0x14
+        MoveDown: 0x18
+        MoveLeft: 0x1C
+        ZoomIn: 0x48
+        ZoomOut: 0x49
+        Unknown: default
+
+TdStatus:
+  type: register
+  address: 0x02
+  size_bits: 8
+  access: RO
+  description: Touch detection status
+  fields:
+    touch_count:
+      base: uint
+      start: 0
+      end: 4
+
+# =============================================================================
+# Touch Point Block (0x03-0x0E, repeated for 2 touch points, stride 6)
+# =============================================================================
+
+Tp:
+  type: block
+  address_offset: 0x03
+  repeat:
+    count: 2
+    stride: 6
+  objects:
+    XEvent:
+      type: register
+      address: 0
+      size_bits: 16
+      access: RO
+      description: X coordinate and event flag
+      fields:
+        x:
+          base: uint
+          start: 0
+          end: 12
+          description: X coordinate (12-bit)
+        event:
+          base: uint
+          start: 14
+          end: 16
+          description: Touch event flag
+          conversion:
+            name: TouchEvent
+            PressDown: 0
+            LiftUp: 1
+            Contact: 2
+            NoEvent: 3
+
+    YId:
+      type: register
+      address: 2
+      size_bits: 16
+      access: RO
+      description: Y coordinate and touch point ID
+      fields:
+        y:
+          base: uint
+          start: 0
+          end: 12
+          description: Y coordinate (12-bit)
+        id:
+          base: uint
+          start: 12
+          end: 16
+          description: Touch point ID
+
+    Weight:
+      type: register
+      address: 4
+      size_bits: 8
+      access: RO
+      description: Touch weight/pressure
+      fields:
+        value:
+          base: uint
+          start: 0
+          end: 8
+
+    Misc:
+      type: register
+      address: 5
+      size_bits: 8
+      access: RO
+      description: Touch area and miscellaneous data
+      fields:
+        area:
+          base: uint
+          start: 4
+          end: 8
+          description: Touch area
+
+# =============================================================================
+# Mode Parameter Registers (0x80-0x89)
+# =============================================================================
+
+Threshold:
+  type: register
+  address: 0x80
+  size_bits: 8
+  access: RW
+  description: Touch detection threshold (lower = more sensitive)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+FilterCoefficient:
+  type: register
+  address: 0x85
+  size_bits: 8
+  access: RW
+  description: Filter coefficient for touch smoothing
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+Ctrl:
+  type: register
+  address: 0x86
+  size_bits: 8
+  access: RW
+  description: Control mode
+  fields:
+    mode:
+      base: uint
+      start: 0
+      end: 8
+      conversion:
+        name: CtrlMode
+        KeepActive: 0
+        SwitchToMonitor: 1
+        Unknown: default
+
+TimeEnterMonitor:
+  type: register
+  address: 0x87
+  size_bits: 8
+  access: RW
+  description: Time period to enter monitor mode (seconds)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+ActiveModeRate:
+  type: register
+  address: 0x88
+  size_bits: 8
+  access: RW
+  description: Report rate in active mode (Hz)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+MonitorModeRate:
+  type: register
+  address: 0x89
+  size_bits: 8
+  access: RW
+  description: Report rate in monitor mode (Hz)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+# =============================================================================
+# Frequency Hopping Register (0x8B)
+# =============================================================================
+
+FreqHoppingEn:
+  type: register
+  address: 0x8B
+  size_bits: 8
+  access: RW
+  description: Frequency hopping / charger mode enable (0=off, 1=on)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+# =============================================================================
+# Gesture Parameter Registers (0x91-0x96)
+# =============================================================================
+
+RadianValue:
+  type: register
+  address: 0x91
+  size_bits: 8
+  access: RW
+  description: Minimum angle for rotating gesture
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+OffsetLeftRight:
+  type: register
+  address: 0x92
+  size_bits: 8
+  access: RW
+  description: Maximum offset for left/right gesture
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+OffsetUpDown:
+  type: register
+  address: 0x93
+  size_bits: 8
+  access: RW
+  description: Maximum offset for up/down gesture
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+DistanceLeftRight:
+  type: register
+  address: 0x94
+  size_bits: 8
+  access: RW
+  description: Minimum distance for left/right gesture
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+DistanceUpDown:
+  type: register
+  address: 0x95
+  size_bits: 8
+  access: RW
+  description: Minimum distance for up/down gesture
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+DistanceZoom:
+  type: register
+  address: 0x96
+  size_bits: 8
+  access: RW
+  description: Maximum distance for zoom gesture
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+# =============================================================================
+# System Information Registers (0x9F-0xBC)
+# =============================================================================
+
+CipherMid:
+  type: register
+  address: 0x9F
+  size_bits: 8
+  access: RO
+  description: Chip cipher middle byte
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+CipherLow:
+  type: register
+  address: 0xA0
+  size_bits: 8
+  access: RO
+  description: Chip type identifier (0x02 = FT6336U)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+LibraryVersion:
+  type: register
+  address: 0xA1
+  size_bits: 16
+  access: RO
+  description: Library version (16-bit)
+  fields:
+    version:
+      base: uint
+      start: 0
+      end: 16
+
+ChipId:
+  type: register
+  address: 0xA3
+  size_bits: 8
+  access: RO
+  description: Chip ID (0x64 for FT6336U)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+GMode:
+  type: register
+  address: 0xA4
+  size_bits: 8
+  access: RW
+  description: Gesture/interrupt mode
+  fields:
+    mode:
+      base: uint
+      start: 0
+      end: 8
+      conversion:
+        name: GestureMode
+        Polling: 0
+        Trigger: 1
+        Unknown: default
+
+PowerMode:
+  type: register
+  address: 0xA5
+  size_bits: 8
+  access: RW
+  description: Power mode
+  fields:
+    mode:
+      base: uint
+      start: 0
+      end: 8
+      conversion:
+        name: PowerModeEnum
+        Active: 0
+        Monitor: 1
+        Standby: 2
+        Hibernate: 3
+        Unknown: default
+
+FirmwareId:
+  type: register
+  address: 0xA6
+  size_bits: 8
+  access: RO
+  description: Firmware ID
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+FocaltechId:
+  type: register
+  address: 0xA8
+  size_bits: 8
+  access: RO
+  description: FocalTech panel ID (0x11 for FT6x06, 0xCD for FT6x36)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+ReleaseCodeId:
+  type: register
+  address: 0xAF
+  size_bits: 8
+  access: RO
+  description: Release code ID
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+FaceDecMode:
+  type: register
+  address: 0xB0
+  size_bits: 8
+  access: RW
+  description: Face detection / proximity sensing mode (0x00=off, 0x01=on)
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
+
+State:
+  type: register
+  address: 0xBC
+  size_bits: 8
+  access: RW
+  description: Current device state
+  fields:
+    value:
+      base: uint
+      start: 0
+      end: 8
