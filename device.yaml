@@ -1,7 +1,11 @@
 config:
   register_address_type: u8
   default_byte_order: BE
+  default_bit_order: LSB0
+  default_register_access: RW
+  default_field_access: RW
   defmt_feature: "defmt"
+  name_word_boundaries: [ "Underscore", "Hyphen", "LowerUpper", "UpperDigit", "DigitUpper" ]
 
 # =============================================================================
 # Device Mode Register (0x00)

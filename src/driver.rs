@@ -32,6 +32,11 @@ where
         data: &[u8],
     ) -> Result<(), Self::Error> {
         let mut buffer = [0u8; 5];
+        if (1 + data.len()) > buffer.len() {
+            return Err(Ft6336uError::NotSupported(
+                "Write data length exceeds buffer",
+            ));
+        }
         buffer[0] = address;
         buffer[1..1 + data.len()].copy_from_slice(data);
         self.i2c_bus
@@ -115,7 +120,7 @@ where
     #[bisync]
     pub async fn read_touch_x(&mut self, point: usize) -> Result<u16, Ft6336uError<I2CBusErr>> {
         let mut block = self.ll.tp(point);
-        let mut op = block.x_event();
+        let mut op = block.xevent();
         let reg = read_internal(&mut op).await?;
         Ok(reg.x())
     }
@@ -123,7 +128,7 @@ where
     #[bisync]
     pub async fn read_touch_y(&mut self, point: usize) -> Result<u16, Ft6336uError<I2CBusErr>> {
         let mut block = self.ll.tp(point);
-        let mut op = block.y_id();
+        let mut op = block.yid();
         let reg = read_internal(&mut op).await?;
         Ok(reg.y())
     }
@@ -134,7 +139,7 @@ where
         point: usize,
     ) -> Result<TouchEvent, Ft6336uError<I2CBusErr>> {
         let mut block = self.ll.tp(point);
-        let mut op = block.x_event();
+        let mut op = block.xevent();
         let reg = read_internal(&mut op).await?;
         Ok(reg.event())
     }
@@ -142,7 +147,7 @@ where
     #[bisync]
     pub async fn read_touch_id(&mut self, point: usize) -> Result<u8, Ft6336uError<I2CBusErr>> {
         let mut block = self.ll.tp(point);
-        let mut op = block.y_id();
+        let mut op = block.yid();
         let reg = read_internal(&mut op).await?;
         Ok(reg.id())
     }

@@ -13,6 +13,8 @@ pub const FT6336U_I2C_ADDRESS: u8 = 0x38;
 pub enum Ft6336uError<I2cErr> {
     #[error("I2C error")]
     I2c(I2cErr),
+    #[error("Not supported: {0}")]
+    NotSupported(&'static str),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
