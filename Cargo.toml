@@ -1,6 +1,6 @@
 [package]
 name = "ft6336u-dd"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "A driver for the FT6336U capacitive touch controller (uses device-driver crate)"
 authors = ["Danila Gornushko <me@okhsunrog.dev>"]
