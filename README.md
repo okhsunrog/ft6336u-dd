@@ -100,31 +100,7 @@ The driver tracks touch state internally: the first scan detecting a finger repo
 
 ## Register map
 
-| Address | Register | Access | Description |
-|---------|----------|--------|-------------|
-| 0x00 | DeviceMode | RW | Operating mode (Working/Factory) |
-| 0x01 | GestureId | RO | Gesture detection result |
-| 0x02 | TdStatus | RO | Touch point count |
-| 0x03-0x0E | Tp (x2) | RO | Touch point data (X, Y, event, ID, weight, area) |
-| 0x80 | Threshold | RW | Touch detection threshold |
-| 0x85 | FilterCoefficient | RW | Touch smoothing filter |
-| 0x86 | Ctrl | RW | Control mode (KeepActive/SwitchToMonitor) |
-| 0x87 | TimeEnterMonitor | RW | Seconds before entering monitor mode |
-| 0x88 | ActiveModeRate | RW | Report rate in active mode (Hz) |
-| 0x89 | MonitorModeRate | RW | Report rate in monitor mode (Hz) |
-| 0x8B | FreqHoppingEn | RW | Frequency hopping / charger mode |
-| 0x91-0x96 | Gesture params | RW | Radian, offset, distance thresholds |
-| 0x9F | CipherMid | RO | Chip cipher middle byte |
-| 0xA0 | CipherLow | RO | Chip type (0x02 = FT6336U) |
-| 0xA1 | LibraryVersion | RO | 16-bit library version |
-| 0xA3 | ChipId | RO | Chip ID (0x64 for FT6336U) |
-| 0xA4 | GMode | RW | Interrupt mode (Polling/Trigger) |
-| 0xA5 | PowerMode | RW | Power mode (Active/Monitor/Standby/Hibernate) |
-| 0xA6 | FirmwareId | RO | Firmware version |
-| 0xA8 | FocaltechId | RO | Panel ID |
-| 0xAF | ReleaseCodeId | RO | Release code |
-| 0xB0 | FaceDecMode | RW | Proximity sensing (0=off, 1=on) |
-| 0xBC | State | RW | Device state |
+See [`device.yaml`](device.yaml) for the full register definition (27 registers with addresses, field layouts, and enum conversions).
 
 ## Cargo features
 
