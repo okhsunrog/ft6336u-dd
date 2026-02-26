@@ -5,7 +5,7 @@
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/okhsunrog/ft6336u-dd/rust_ci.yml?logo=github)](https://github.com/okhsunrog/ft6336u-dd/actions/workflows/rust_ci.yml)
 
-This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points with gesture detection. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative YAML manifest ([`device.yaml`](device.yaml)) for a type-safe register map definition covering 27 registers.
+This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative YAML manifest ([`device.yaml`](device.yaml)) for a type-safe register map definition covering 27 registers.
 
 ## Overview
 
@@ -14,9 +14,9 @@ The `ft6336u-dd` driver offers:
 - **Declarative Configuration:** The FT6336U register map is defined in [`device.yaml`](device.yaml), enabling `device-driver` to generate a type-safe, low-level register access API.
 - **Unified Async/Blocking API:** Uses the [`bisync`](https://github.com/JM4ier/bisync) crate to provide both asynchronous (`Ft6336uAsync`) and blocking (`Ft6336u`) drivers from the same codebase, with no feature flags required.
 - **High-Level and Low-Level APIs:**
-  - High-level methods simplify tasks like scanning touch points, reading gestures, and configuring thresholds.
+  - High-level methods simplify tasks like scanning touch points and configuring thresholds.
   - Low-level API (via the `ll` field) offers direct, type-safe access to all registers defined in `device.yaml`.
-- **Efficient I2C:** `scan()` reads gesture + 2 touch points in a single 14-byte I2C transaction.
+- **Efficient I2C:** `scan()` reads 2 touch points in a single 13-byte I2C transaction.
 - **`no_std` and `no-alloc`:** Optimized for bare-metal and RTOS environments.
 - **Optional Logging:** Supports `defmt` and the `log` facade for debugging.
 
@@ -39,7 +39,7 @@ The `ft6336u-dd` driver offers:
 
    - **Blocking:**
      ```rust
-     use ft6336u_dd::{Ft6336u, TouchStatus, GestureId};
+     use ft6336u_dd::{Ft6336u, TouchStatus};
 
      let mut touch = Ft6336u::new(i2c);
 
@@ -48,11 +48,6 @@ The `ft6336u-dd` driver offers:
          if point.status != TouchStatus::Release {
              // Handle touch at (point.x, point.y)
          }
-     }
-     match data.gesture {
-         GestureId::MoveUp => { /* swipe up */ }
-         GestureId::MoveDown => { /* swipe down */ }
-         _ => {}
      }
      ```
 
@@ -150,9 +145,8 @@ touch.ll.threshold().write_async(|w| {
 
 ## Scan Behavior
 
-`scan()` performs a single 14-byte I2C read (registers `0x01`-`0x0E`) and returns `TouchData` containing:
+`scan()` performs a single 13-byte I2C read (registers `0x02`-`0x0E`) and returns `TouchData` containing:
 
-- `gesture`: detected gesture (`GestureId` enum — swipe up/down/left/right, zoom in/out)
 - `touch_count`: number of active touch points (0-2)
 - `points`: array of 2 `TouchPoint`s, each with:
   - `status`: `Touch` (new press), `Stream` (continued contact), or `Release`

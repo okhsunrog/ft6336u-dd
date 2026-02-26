@@ -1,7 +1,7 @@
 use super::{I2c, RegisterInterface, bisync, only_async, only_sync};
 use crate::{
     CtrlMode, DeviceMode, FT6336U_I2C_ADDRESS, Ft6336uError, Ft6336uInterface, Ft6336uLowLevel,
-    GestureId, GestureMode, PowerModeEnum, TouchData, TouchEvent, TouchStatus,
+    PowerModeEnum, TouchData, TouchEvent, TouchStatus,
 };
 
 #[bisync]
@@ -99,15 +99,6 @@ where
     ) -> Result<(), Ft6336uError<I2CBusErr>> {
         let mut op = self.ll.device_mode();
         write_internal(&mut op, |r| r.set_mode(mode)).await
-    }
-
-    // === Gesture ID (0x01) ===
-
-    #[bisync]
-    pub async fn read_gesture_id(&mut self) -> Result<GestureId, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.gesture_id();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.gesture())
     }
 
     // === Touch Detection Status (0x02) ===
@@ -283,92 +274,6 @@ where
         write_internal(&mut op, |r| r.set_value(val)).await
     }
 
-    // === Gesture Parameters (0x91-0x96) ===
-
-    #[bisync]
-    pub async fn read_radian_value(&mut self) -> Result<u8, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.radian_value();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn write_radian_value(&mut self, val: u8) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.radian_value();
-        write_internal(&mut op, |r| r.set_value(val)).await
-    }
-
-    #[bisync]
-    pub async fn read_offset_left_right(&mut self) -> Result<u8, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.offset_left_right();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn write_offset_left_right(
-        &mut self,
-        val: u8,
-    ) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.offset_left_right();
-        write_internal(&mut op, |r| r.set_value(val)).await
-    }
-
-    #[bisync]
-    pub async fn read_offset_up_down(&mut self) -> Result<u8, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.offset_up_down();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn write_offset_up_down(&mut self, val: u8) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.offset_up_down();
-        write_internal(&mut op, |r| r.set_value(val)).await
-    }
-
-    #[bisync]
-    pub async fn read_distance_left_right(&mut self) -> Result<u8, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.distance_left_right();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn write_distance_left_right(
-        &mut self,
-        val: u8,
-    ) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.distance_left_right();
-        write_internal(&mut op, |r| r.set_value(val)).await
-    }
-
-    #[bisync]
-    pub async fn read_distance_up_down(&mut self) -> Result<u8, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.distance_up_down();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn write_distance_up_down(&mut self, val: u8) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.distance_up_down();
-        write_internal(&mut op, |r| r.set_value(val)).await
-    }
-
-    #[bisync]
-    pub async fn read_distance_zoom(&mut self) -> Result<u8, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.distance_zoom();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn write_distance_zoom(&mut self, val: u8) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.distance_zoom();
-        write_internal(&mut op, |r| r.set_value(val)).await
-    }
-
     // === System Information (0x9F-0xBC) ===
 
     #[bisync]
@@ -397,19 +302,6 @@ where
         let mut op = self.ll.chip_id();
         let reg = read_internal(&mut op).await?;
         Ok(reg.value())
-    }
-
-    #[bisync]
-    pub async fn read_g_mode(&mut self) -> Result<GestureMode, Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.g_mode();
-        let reg = read_internal(&mut op).await?;
-        Ok(reg.mode())
-    }
-
-    #[bisync]
-    pub async fn write_g_mode(&mut self, mode: GestureMode) -> Result<(), Ft6336uError<I2CBusErr>> {
-        let mut op = self.ll.g_mode();
-        write_internal(&mut op, |r| r.set_mode(mode)).await
     }
 
     #[bisync]
@@ -475,23 +367,21 @@ where
         write_internal(&mut op, |r| r.set_value(val)).await
     }
 
-    // === Scan (reads gesture + all touch points in a single I2C transaction) ===
+    // === Scan (reads all touch points in a single I2C transaction) ===
 
     #[bisync]
     pub async fn scan(&mut self) -> Result<TouchData, Ft6336uError<I2CBusErr>> {
-        // Batch read registers 0x01-0x0E (14 bytes) in one I2C transaction:
-        // buf[0]:     GestureId
-        // buf[1]:     TdStatus (touch count in bits 3:0)
-        // buf[2..8]:  Touch point 0: XEvent(2B) + YId(2B) + Weight(1B) + Misc(1B)
-        // buf[8..14]: Touch point 1: XEvent(2B) + YId(2B) + Weight(1B) + Misc(1B)
+        // Batch read registers 0x02-0x0E (13 bytes) in one I2C transaction:
+        // buf[0]:    TdStatus (touch count in bits 3:0)
+        // buf[1..7]: Touch point 0: XEvent(2B) + YId(2B) + Weight(1B) + Misc(1B)
+        // buf[7..13]: Touch point 1: XEvent(2B) + YId(2B) + Weight(1B) + Misc(1B)
         //
         // XEvent (BE 16-bit): event = bits 15:14 (high[7:6]), x = bits 11:0 (high[3:0] << 8 | low)
         // YId    (BE 16-bit): id    = bits 15:12 (high[7:4]), y = bits 11:0 (high[3:0] << 8 | low)
-        let mut buf = [0u8; 14];
-        self.ll.interface().read_register(0x01, 0, &mut buf).await?;
+        let mut buf = [0u8; 13];
+        self.ll.interface().read_register(0x02, 0, &mut buf).await?;
 
-        self.touch_data.gesture = GestureId::from(buf[0]);
-        let touch_count = buf[1] & 0x0F;
+        let touch_count = buf[0] & 0x0F;
         self.touch_data.touch_count = touch_count;
 
         if touch_count == 0 {
@@ -502,7 +392,7 @@ where
             let mut seen = [false; 2];
 
             for i in 0..count {
-                let off = 2 + i * 6;
+                let off = 1 + i * 6;
                 let id = ((buf[off + 2] >> 4) & 0x0F) as usize;
                 if id < 2 {
                     seen[id] = true;

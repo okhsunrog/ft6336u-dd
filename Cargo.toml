@@ -7,8 +7,10 @@ authors = ["Danila Gornushko <me@okhsunrog.dev>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/okhsunrog/ft6336u-dd"
 keywords = ["embedded-hal-driver", "async", "no-std", "touch", "ft6336u"]
+categories = ["embedded", "no-std", "hardware-support"]
 readme = "README.md"
 documentation = "https://docs.rs/ft6336u-dd"
+exclude = ["docs/"]
 
 [dependencies]
 bisync = "0.3"
