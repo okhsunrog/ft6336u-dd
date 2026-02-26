@@ -1,65 +1,74 @@
-# ft6336u-dd
+# FT6336U Capacitive Touch Controller Driver (ft6336u-dd)
 
-`no_std` Rust driver for the FocalTech FT6336U capacitive touch controller, built on the [`device-driver`](https://crates.io/crates/device-driver) crate for type-safe register access.
+[![Crates.io](https://img.shields.io/crates/v/ft6336u-dd.svg)](https://crates.io/crates/ft6336u-dd)
+[![Docs.rs](https://docs.rs/ft6336u-dd/badge.svg)](https://docs.rs/ft6336u-dd)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/okhsunrog/ft6336u-dd/rust_ci.yml?logo=github)](https://github.com/okhsunrog/ft6336u-dd/actions/workflows/rust_ci.yml)
 
-Supports both blocking and async I2C via [`embedded-hal`](https://crates.io/crates/embedded-hal) 1.0 and [`embedded-hal-async`](https://crates.io/crates/embedded-hal-async) 1.0.
+This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points with gesture detection. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative YAML manifest ([`device.yaml`](device.yaml)) for a type-safe register map definition covering 27 registers.
 
-## Features
+## Overview
 
-- Blocking (`Ft6336u`) and async (`Ft6336uAsync`) APIs from a single codebase using [`bisync`](https://crates.io/crates/bisync)
-- Single I2C transaction `scan()` reads gesture + 2 touch points in 14 bytes
-- 27 registers covering touch data, configuration, gestures, power management, and chip identification
-- Type-safe enums for device mode, gesture ID, touch events, power mode, control mode, and gesture/interrupt mode
-- Optional `defmt` support
+The `ft6336u-dd` driver offers:
 
-## Usage
+- **Declarative Configuration:** The FT6336U register map is defined in [`device.yaml`](device.yaml), enabling `device-driver` to generate a type-safe, low-level register access API.
+- **Unified Async/Blocking API:** Uses the [`bisync`](https://github.com/JM4ier/bisync) crate to provide both asynchronous (`Ft6336uAsync`) and blocking (`Ft6336u`) drivers from the same codebase, with no feature flags required.
+- **High-Level and Low-Level APIs:**
+  - High-level methods simplify tasks like scanning touch points, reading gestures, and configuring thresholds.
+  - Low-level API (via the `ll` field) offers direct, type-safe access to all registers defined in `device.yaml`.
+- **Efficient I2C:** `scan()` reads gesture + 2 touch points in a single 14-byte I2C transaction.
+- **`no_std` and `no-alloc`:** Optimized for bare-metal and RTOS environments.
+- **Optional Logging:** Supports `defmt` and the `log` facade for debugging.
 
-### Blocking
+## Getting Started
 
-```rust
-use ft6336u_dd::{Ft6336u, TouchStatus};
+1. **Add `ft6336u-dd` to `Cargo.toml`:**
 
-let mut touch = Ft6336u::new(i2c);
+   ```toml
+   [dependencies]
+   ft6336u-dd = "0.1.0"
+   # For blocking usage (Ft6336u):
+   embedded-hal = "1.0.0"
+   # For async usage (Ft6336uAsync):
+   embedded-hal-async = "1.0.0"
+   ```
 
-let data = touch.scan().unwrap();
-for point in &data.points {
-    if point.status != TouchStatus::Release {
-        // Handle touch at (point.x, point.y)
-    }
-}
-```
+   > **Note:** Add the relevant `embedded-hal` crate for your use case, no need for both.
 
-### Async
+2. **Instantiate the driver and scan for touches:**
 
-```rust
-use ft6336u_dd::{Ft6336uAsync, TouchStatus};
+   - **Blocking:**
+     ```rust
+     use ft6336u_dd::{Ft6336u, TouchStatus, GestureId};
 
-let mut touch = Ft6336uAsync::new(i2c);
+     let mut touch = Ft6336u::new(i2c);
 
-let data = touch.scan().await.unwrap();
-for point in &data.points {
-    if point.status != TouchStatus::Release {
-        // Handle touch at (point.x, point.y)
-    }
-}
-```
+     let data = touch.scan()?;
+     for point in &data.points {
+         if point.status != TouchStatus::Release {
+             // Handle touch at (point.x, point.y)
+         }
+     }
+     match data.gesture {
+         GestureId::MoveUp => { /* swipe up */ }
+         GestureId::MoveDown => { /* swipe down */ }
+         _ => {}
+     }
+     ```
 
-### Gesture detection
+   - **Async:**
+     ```rust
+     use ft6336u_dd::{Ft6336uAsync, TouchStatus};
 
-```rust
-use ft6336u_dd::GestureId;
+     let mut touch = Ft6336uAsync::new(i2c);
 
-let data = touch.scan().unwrap();
-match data.gesture {
-    GestureId::MoveUp => { /* swipe up */ }
-    GestureId::MoveDown => { /* swipe down */ }
-    GestureId::MoveLeft => { /* swipe left */ }
-    GestureId::MoveRight => { /* swipe right */ }
-    GestureId::ZoomIn => { /* pinch out */ }
-    GestureId::ZoomOut => { /* pinch in */ }
-    _ => {}
-}
-```
+     let data = touch.scan().await?;
+     for point in &data.points {
+         if point.status != TouchStatus::Release {
+             // Handle touch at (point.x, point.y)
+         }
+     }
+     ```
 
 ### Configuration
 
@@ -67,30 +76,83 @@ match data.gesture {
 use ft6336u_dd::PowerModeEnum;
 
 // Set touch sensitivity (lower = more sensitive)
-touch.write_touch_threshold(40).unwrap();
+touch.write_touch_threshold(40)?;
 
 // Set report rate in active mode (Hz)
-touch.write_active_rate(60).unwrap();
+touch.write_active_rate(60)?;
 
 // Enter hibernate mode
-touch.write_power_mode(PowerModeEnum::Hibernate).unwrap();
+touch.write_power_mode(PowerModeEnum::Hibernate)?;
 ```
 
-### Low-level register access
+## Low-Level API Usage
 
-The `ll` field exposes the full device-driver generated register API:
+The driver provides direct access to all FT6336U registers through the low-level API via `touch.ll`. This API is automatically generated from [`device.yaml`](device.yaml) and provides type-safe access to all register fields.
+
+### Reading Registers
+
+Use `.read()` to read a register and access its fields:
 
 ```rust
-let mut op = touch.ll.chip_id();
-let chip_id = op.read().unwrap();
+// Read chip ID
+let chip_id = touch.ll.chip_id().read()?;
 assert_eq!(chip_id.value(), 0x64); // FT6336U
+
+// Read power mode
+let power = touch.ll.power_mode().read()?;
+let mode = power.mode(); // Returns PowerModeEnum
 ```
 
-## Scan behavior
+### Writing Registers
+
+Use `.write()` with a closure to set register fields:
+
+```rust
+// Set touch threshold
+touch.ll.threshold().write(|w| {
+    w.set_value(40);
+})?;
+
+// Set interrupt mode to trigger
+touch.ll.g_mode().write(|w| {
+    w.set_mode(GestureMode::Trigger);
+})?;
+```
+
+### Modifying Registers
+
+Use `.modify()` to read-modify-write, preserving other fields:
+
+```rust
+touch.ll.device_mode().modify(|w| {
+    w.set_mode(DeviceMode::Working);
+})?;
+```
+
+### Async Low-Level API
+
+The low-level API has async versions for use with `Ft6336uAsync`. Simply append `_async` to the method name:
+
+```rust
+let chip_id = touch.ll.chip_id().read_async().await?;
+
+touch.ll.threshold().write_async(|w| {
+    w.set_value(40);
+}).await?;
+```
+
+### Finding Register/Field Names
+
+1. **Check [`device.yaml`](device.yaml)** - All registers and fields are documented there
+2. **Use IDE autocomplete** - Type `touch.ll.` to see all available registers
+3. **Read a register** - Use `.read()` then autocomplete to see available field getters
+4. **Write a register** - The closure parameter has autocomplete for all setters
+
+## Scan Behavior
 
 `scan()` performs a single 14-byte I2C read (registers `0x01`-`0x0E`) and returns `TouchData` containing:
 
-- `gesture`: detected gesture (`GestureId` enum)
+- `gesture`: detected gesture (`GestureId` enum — swipe up/down/left/right, zoom in/out)
 - `touch_count`: number of active touch points (0-2)
 - `points`: array of 2 `TouchPoint`s, each with:
   - `status`: `Touch` (new press), `Stream` (continued contact), or `Release`
@@ -98,19 +160,16 @@ assert_eq!(chip_id.value(), 0x64); // FT6336U
 
 The driver tracks touch state internally: the first scan detecting a finger reports `Touch`, subsequent scans report `Stream`, and when the finger lifts, `Release`.
 
-## Register map
+## Register Map
 
-See [`device.yaml`](device.yaml) for the full register definition (27 registers with addresses, field layouts, and enum conversions).
+The FT6336U register map is defined in [`device.yaml`](device.yaml), which `device-driver` uses to generate Rust code. This file specifies:
 
-## Cargo features
+- Register names, addresses, and sizes
+- Field names, bit positions, and access modes (Read-Only, Read-Write)
+- Enumerations for field values (e.g., gesture IDs, power modes, touch events)
+- Descriptions based on the datasheet
 
-| Feature | Description |
-|---------|-------------|
-| `defmt` | Enable `defmt::Format` derives on all types |
-| `log` | Enable `log` crate integration |
-| `std` | Enable `std` error trait support |
-
-## Hardware notes
+## Hardware Notes
 
 - I2C address: `0x38` (available as `FT6336U_I2C_ADDRESS`)
 - I2C speed: up to 400kHz
@@ -118,6 +177,13 @@ See [`device.yaml`](device.yaml) for the full register definition (27 registers 
 - The driver does not manage reset or interrupt pins. Handle these in your application/BSP according to your board's wiring (GPIO, PMIC, I2C expander, etc.)
 - Reset sequence: pull RST low for at least 5ms, release, wait at least 300ms before communicating
 
+## Feature Flags
+
+- **`default = []`**: No default features; async and blocking drivers are always available.
+- **`std`**: Enables `std` features for `thiserror`.
+- **`log`**: Enables `log` facade logging.
+- **`defmt`**: Enables `defmt` logging and `defmt::Format` derives on all types.
+
 ## License
 
-Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or [MIT license](LICENSE-MIT) at your option.
+This project is dual-licensed under the [MIT License](LICENSE-MIT) or [Apache License 2.0](LICENSE-APACHE), at your option.
