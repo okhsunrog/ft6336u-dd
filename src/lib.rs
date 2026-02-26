@@ -41,11 +41,22 @@ impl Default for TouchPoint {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub struct TouchData {
+    pub gesture: GestureId,
     pub touch_count: u8,
     pub points: [TouchPoint; 2],
+}
+
+impl Default for TouchData {
+    fn default() -> Self {
+        Self {
+            gesture: GestureId::NoGesture,
+            touch_count: 0,
+            points: [TouchPoint::default(); 2],
+        }
+    }
 }
 
 pub struct Ft6336uInterface<I2CBus> {
