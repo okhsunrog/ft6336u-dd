@@ -1,0 +1,342 @@
+device Ft6336ULowLevel {
+    default-byte-order: BE,
+    register-address-type: u8,
+    word-boundaries: "_:-:bB:A1:1A",
+    default-access: RW,
+
+    /// Device operating mode
+    register DeviceMode {
+        address: 0x00,
+        fields: fieldset DeviceModeFieldSet {
+            size-bytes: 1,
+
+            field mode 6:4 -> _ as enum DeviceMode {
+                Working: 0,
+                Factory: 4,
+                Unknown: default _,
+            },
+        },
+    },
+    /// Gesture ID
+    register GestureId {
+        address: 0x01,
+        access: RO,
+        fields: fieldset GestureIdFieldSet {
+            size-bytes: 1,
+
+            field gesture 7:0 -> _ as enum GestureId {
+                NoGesture: 0x00,
+                MoveUp: 0x10,
+                MoveRight: 0x14,
+                MoveDown: 0x18,
+                MoveLeft: 0x1C,
+                ZoomIn: 0x48,
+                ZoomOut: 0x49,
+                Unknown: default _,
+            },
+        },
+    },
+    /// Touch detection status
+    register TdStatus {
+        address: 0x02,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field touch_count 3:0,
+        },
+    },
+    block Tp[2 stride 6] {
+        address-offset: 3,
+
+        /// X coordinate and event flag
+        register XEvent {
+            address: 0x00,
+            access: RO,
+            fields: fieldset _ {
+                size-bytes: 2,
+
+                /// X coordinate (12-bit)
+                field x 11:0,
+                /// Touch event flag
+                field event 15:14 -> _ as enum TouchEvent {
+                    PressDown: 0,
+                    LiftUp: 1,
+                    Contact: 2,
+                    NoEvent: 3,
+                },
+            },
+        },
+        /// Y coordinate and touch point ID
+        register YId {
+            address: 0x02,
+            access: RO,
+            fields: fieldset _ {
+                size-bytes: 2,
+
+                /// Y coordinate (12-bit)
+                field y 11:0,
+                /// Touch point ID
+                field id 15:12,
+            },
+        },
+        /// Touch weight/pressure
+        register Weight {
+            address: 0x04,
+            access: RO,
+            fields: fieldset _ {
+                size-bytes: 1,
+
+                field value 7:0,
+            },
+        },
+        /// Touch area and miscellaneous data
+        register Misc {
+            address: 0x05,
+            access: RO,
+            fields: fieldset _ {
+                size-bytes: 1,
+
+                /// Touch area
+                field area 7:4,
+            },
+        },
+    },
+    /// Touch detection threshold (lower = more sensitive)
+    register Threshold {
+        address: 0x80,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Filter coefficient for touch smoothing
+    register FilterCoefficient {
+        address: 0x85,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Control mode
+    register Ctrl {
+        address: 0x86,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field mode 7:0 -> _ as enum CtrlMode {
+                KeepActive: 0,
+                SwitchToMonitor: 1,
+                Unknown: default _,
+            },
+        },
+    },
+    /// Time period to enter monitor mode (seconds)
+    register TimeEnterMonitor {
+        address: 0x87,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Report rate in active mode (Hz)
+    register ActiveModeRate {
+        address: 0x88,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Report rate in monitor mode (Hz)
+    register MonitorModeRate {
+        address: 0x89,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Frequency hopping / charger mode enable (0=off, 1=on)
+    register FreqHoppingEn {
+        address: 0x8B,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Minimum angle for rotating gesture
+    register RadianValue {
+        address: 0x91,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Maximum offset for left/right gesture
+    register OffsetLeftRight {
+        address: 0x92,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Maximum offset for up/down gesture
+    register OffsetUpDown {
+        address: 0x93,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Minimum distance for left/right gesture
+    register DistanceLeftRight {
+        address: 0x94,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Minimum distance for up/down gesture
+    register DistanceUpDown {
+        address: 0x95,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Maximum distance for zoom gesture
+    register DistanceZoom {
+        address: 0x96,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Chip cipher middle byte
+    register CipherMid {
+        address: 0x9F,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Chip type identifier (0x02 = FT6336U)
+    register CipherLow {
+        address: 0xA0,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Library version (16-bit)
+    register LibraryVersion {
+        address: 0xA1,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 2,
+
+            field version 15:0,
+        },
+    },
+    /// Chip ID (0x64 for FT6336U)
+    register ChipId {
+        address: 0xA3,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Gesture/interrupt mode
+    register GMode {
+        address: 0xA4,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field mode 7:0 -> _ as enum GestureMode {
+                Polling: 0,
+                Trigger: 1,
+                Unknown: default _,
+            },
+        },
+    },
+    /// Power mode
+    register PowerMode {
+        address: 0xA5,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field mode 7:0 -> _ as enum PowerModeEnum {
+                Active: 0,
+                Monitor: 1,
+                Standby: 2,
+                Hibernate: 3,
+                Unknown: default _,
+            },
+        },
+    },
+    /// Firmware ID
+    register FirmwareId {
+        address: 0xA6,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// FocalTech panel ID (0x11 for FT6x06, 0xCD for FT6x36)
+    register FocaltechId {
+        address: 0xA8,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Release code ID
+    register ReleaseCodeId {
+        address: 0xAF,
+        access: RO,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Face detection / proximity sensing mode (0x00=off, 0x01=on)
+    register FaceDecMode {
+        address: 0xB0,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+    /// Current device state
+    register State {
+        address: 0xBC,
+        fields: fieldset _ {
+            size-bytes: 1,
+
+            field value 7:0,
+        },
+    },
+}

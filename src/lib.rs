@@ -5,7 +5,10 @@ pub(crate) mod fmt;
 
 use thiserror::Error;
 
-device_driver::create_device!(device_name: Ft6336uLowLevel, manifest: "device.yaml");
+device_driver::compile!(
+    options: "--rust-defmt-feature=defmt",
+    manifest: "device.ddsl"
+);
 pub const FT6336U_I2C_ADDRESS: u8 = 0x38;
 
 #[derive(Debug, Error)]
@@ -58,6 +61,17 @@ impl<I2CBus> Ft6336uInterface<I2CBus> {
     pub fn new(i2c_bus: I2CBus) -> Self {
         Self { i2c_bus }
     }
+}
+
+/// The address/error types are shared between the blocking and async register
+/// interfaces, so this impl lives outside the two `bisync` modules.
+impl<I2CBus, E> device_driver::RegisterInterfaceBase for Ft6336uInterface<I2CBus>
+where
+    I2CBus: embedded_hal::i2c::ErrorType<Error = E>,
+    E: core::fmt::Debug,
+{
+    type AddressType = u8;
+    type Error = Ft6336uError<E>;
 }
 
 #[path = "."]

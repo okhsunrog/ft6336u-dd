@@ -5,17 +5,17 @@
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/okhsunrog/ft6336u-dd/rust_ci.yml?logo=github)](https://github.com/okhsunrog/ft6336u-dd/actions/workflows/rust_ci.yml)
 
-This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative YAML manifest ([`device.yaml`](device.yaml)) for a type-safe register map definition covering 27 registers.
+This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative YAML manifest ([`device.ddsl`](device.ddsl)) for a type-safe register map definition covering 27 registers.
 
 ## Overview
 
 The `ft6336u-dd` driver offers:
 
-- **Declarative Configuration:** The FT6336U register map is defined in [`device.yaml`](device.yaml), enabling `device-driver` to generate a type-safe, low-level register access API.
+- **Declarative Configuration:** The FT6336U register map is defined in [`device.ddsl`](device.ddsl), enabling `device-driver` to generate a type-safe, low-level register access API.
 - **Unified Async/Blocking API:** Uses the [`bisync`](https://github.com/JM4ier/bisync) crate to provide both asynchronous (`Ft6336uAsync`) and blocking (`Ft6336u`) drivers from the same codebase, with no feature flags required.
 - **High-Level and Low-Level APIs:**
   - High-level methods simplify tasks like scanning touch points and configuring thresholds.
-  - Low-level API (via the `ll` field) offers direct, type-safe access to all registers defined in `device.yaml`.
+  - Low-level API (via the `ll` field) offers direct, type-safe access to all registers defined in `device.ddsl`.
 - **Efficient I2C:** `scan()` reads 2 touch points in a single 13-byte I2C transaction.
 - **`no_std` and `no-alloc`:** Optimized for bare-metal and RTOS environments.
 - **Optional Logging:** Supports `defmt` and the `log` facade for debugging.
@@ -26,7 +26,7 @@ The `ft6336u-dd` driver offers:
 
    ```toml
    [dependencies]
-   ft6336u-dd = "0.1.0"
+   ft6336u-dd = "0.2.0"
    # For blocking usage (Ft6336u):
    embedded-hal = "1.0.0"
    # For async usage (Ft6336uAsync):
@@ -82,7 +82,7 @@ touch.write_power_mode(PowerModeEnum::Hibernate)?;
 
 ## Low-Level API Usage
 
-The driver provides direct access to all FT6336U registers through the low-level API via `touch.ll`. This API is automatically generated from [`device.yaml`](device.yaml) and provides type-safe access to all register fields.
+The driver provides direct access to all FT6336U registers through the low-level API via `touch.ll`. This API is automatically generated from [`device.ddsl`](device.ddsl) and provides type-safe access to all register fields.
 
 ### Reading Registers
 
@@ -138,7 +138,7 @@ touch.ll.threshold().write_async(|w| {
 
 ### Finding Register/Field Names
 
-1. **Check [`device.yaml`](device.yaml)** - All registers and fields are documented there
+1. **Check [`device.ddsl`](device.ddsl)** - All registers and fields are documented there
 2. **Use IDE autocomplete** - Type `touch.ll.` to see all available registers
 3. **Read a register** - Use `.read()` then autocomplete to see available field getters
 4. **Write a register** - The closure parameter has autocomplete for all setters
@@ -156,7 +156,7 @@ The driver tracks touch state internally: the first scan detecting a finger repo
 
 ## Register Map
 
-The FT6336U register map is defined in [`device.yaml`](device.yaml), which `device-driver` uses to generate Rust code. This file specifies:
+The FT6336U register map is defined in [`device.ddsl`](device.ddsl), which `device-driver` uses to generate Rust code. This file specifies:
 
 - Register names, addresses, and sizes
 - Field names, bit positions, and access modes (Read-Only, Read-Write)
