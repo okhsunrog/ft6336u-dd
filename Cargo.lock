@@ -468,7 +468,7 @@ checksum = "d9c4f5dac5e15c24eb999c26181a6ca40b39fe946cbe4c263c7209467bc83af2"
 
 [[package]]
 name = "ft6336u-dd"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "bisync",
  "defmt 1.1.1",

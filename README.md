@@ -5,7 +5,7 @@
 [![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](https://opensource.org/licenses)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/okhsunrog/ft6336u-dd/rust_ci.yml?logo=github)](https://github.com/okhsunrog/ft6336u-dd/actions/workflows/rust_ci.yml)
 
-This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative YAML manifest ([`device.ddsl`](device.ddsl)) for a type-safe register map definition covering 27 registers.
+This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch controller, a self-capacitance touch panel controller supporting up to 2 simultaneous touch points. The driver leverages the [`device-driver`](https://crates.io/crates/device-driver) crate with a declarative DDSL manifest ([`device.ddsl`](device.ddsl)) for a type-safe register map definition covering 27 registers.
 
 ## Overview
 
@@ -109,7 +109,7 @@ touch.ll.threshold().write(|w| {
 })?;
 
 // Set interrupt mode to trigger
-touch.ll.g_mode().write(|w| {
+touch.ll.gmode().write(|w| {
     w.set_mode(GestureMode::Trigger);
 })?;
 ```
