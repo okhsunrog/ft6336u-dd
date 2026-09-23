@@ -13,13 +13,13 @@ documentation = "https://docs.rs/ft6336u-dd"
 exclude = ["docs/"]
 
 [dependencies]
-bisync = "0.3"
 defmt = { version = "1.0", optional = true }
 log = { version = "0.4", optional = true }
 device-driver = { version = "2.1.1", default-features = false, features = ["macros"] }
 embedded-hal = "1.0.0"
 embedded-hal-async = "1.0.0"
 thiserror = { version = "2.0.12", default-features = false }
+bisync2 = "0.3"
 
 [features]
 default = []

@@ -12,7 +12,7 @@ This crate provides a `no_std` driver for the FocalTech FT6336U capacitive touch
 The `ft6336u-dd` driver offers:
 
 - **Declarative Configuration:** The FT6336U register map is defined in [`device.ddsl`](device.ddsl), enabling `device-driver` to generate a type-safe, low-level register access API.
-- **Unified Async/Blocking API:** Uses the [`bisync`](https://github.com/JM4ier/bisync) crate to provide both asynchronous (`Ft6336uAsync`) and blocking (`Ft6336u`) drivers from the same codebase, with no feature flags required.
+- **Unified Async/Blocking API:** Uses the [`bisync2`](https://github.com/de-vri-es/bisync2-rs) crate to provide both asynchronous (`Ft6336uAsync`) and blocking (`Ft6336u`) drivers from the same codebase, with no feature flags required.
 - **High-Level and Low-Level APIs:**
   - High-level methods simplify tasks like scanning touch points and configuring thresholds.
   - Low-level API (via the `ll` field) offers direct, type-safe access to all registers defined in `device.ddsl`.
